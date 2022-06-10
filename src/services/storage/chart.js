@@ -1,6 +1,6 @@
 import axios from '../curl/Axios'
 import { ROOT_API } from '../../constants/index'
-import { createStorageTTL, getFromStorageTTL, MEDIUM_TTL } from './index'
+import { createStorageTTL, MEDIUM_TTL } from './index'
 
 export const getForecastData = async (pairSymbol) => {
   return new Promise((resolve, reject) => {
@@ -9,7 +9,7 @@ export const getForecastData = async (pairSymbol) => {
         const cache_key = `m:f:${pairSymbol.symbol.toLowerCase()}` // m for mmrocket , f for forecast
         let data
 
-        const content = getFromStorageTTL(cache_key)
+        const content = null // getFromStorageTTL(cache_key)
         if (content !== null) {
           data = content
         }
@@ -19,7 +19,7 @@ export const getForecastData = async (pairSymbol) => {
           let result = null
           try {
             const formData = new FormData()
-            Object.entries(pairSymbol).map(([key, value]) => {
+            Object.entries(pairSymbol).forEach(([key, value]) => {
               formData.append(key, value)
             })
             result = await axios({

@@ -6065,6 +6065,18 @@ mnemonist@^0.39.0:
   dependencies:
     obliterator "^2.0.1"
 
+moment-timezone@^0.5.34:
+  version "0.5.34"
+  resolved "https://registry.yarnpkg.com/moment-timezone/-/moment-timezone-0.5.34.tgz#a75938f7476b88f155d3504a9343f7519d9a405c"
+  integrity sha512-3zAEHh2hKUs3EXLESx/wsgw6IQdusOT8Bxm3D9UrHPQR7zlMmzwybC8zHEM1tQ4LJwP7fcxrWr8tuBg05fFCbg==
+  dependencies:
+    moment ">= 2.9.0"
+
+"moment@>= 2.9.0":
+  version "2.29.3"
+  resolved "https://registry.yarnpkg.com/moment/-/moment-2.29.3.tgz#edd47411c322413999f7a5940d526de183c031f3"
+  integrity sha512-c6YRvhEo//6T2Jz/vVtYzqBzwvPT95JBQ+smCytzf7c50oMZRsR/a4w88aD34I+/QVSfnoAnSBFPJHItlOMJVw==
+
 ms@2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.0.0.tgz#5608aeadfc00be6c2901df5f9861788de0d597c8"
@@ -7548,6 +7560,11 @@ rollup@^2.43.1:
   integrity sha512-OEf0TgpC9vU6WGROJIk1JA3LR5vk/yvqlzxqdrE2CzzXnqKXNzbAwlWUXis8RS3ZPe7LAq+YUxsRa0l3r27MLA==
   optionalDependencies:
     fsevents "~2.3.2"
+
+round-to@^6.0.0:
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/round-to/-/round-to-6.0.0.tgz#c12a8dee3c78cbc981d161ba8ff0214abd6cae53"
+  integrity sha512-jFvBgyRueGU0QVa7EqXZOkarkzrqEnF3VTCzATRcBkzxXJ4/+pzDf1iouqOqGsx6ZpnIIu5gvFDGnyzoX58ldQ==
 
 run-parallel@^1.1.9:
   version "1.2.0"

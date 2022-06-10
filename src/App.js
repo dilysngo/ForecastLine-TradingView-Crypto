@@ -17,9 +17,9 @@ function businessDayToString(businessDay) {
   return new Date(Date.UTC(businessDay.year, businessDay.month - 1, businessDay.day, 0, 0, 0)).toLocaleDateString()
 }
 
-const getData = async () => {
+const getData = async (rTime) => {
   // 1m 3m 5m 15m 30m 1h 2h 4h 6h 8h 12h 1d 3d 1w 1M
-  const resp = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=500')
+  const resp = await fetch(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${rTime}&limit=1000`)
   const data = await resp.json()
   let klinedata = data.map((d) => ({
     time: d[0] / 1000,
@@ -177,55 +177,54 @@ const renderChart = async (domElement, rTime) => {
     var volume = param.seriesPrices.get(macd_histogram_series)
     if (klineDataSeries) {
       toolTip.innerHTML = `
-          <span class="default-label-box" style="padding-right: 5px;">
+          <div class="default-label-box" style="padding-right: 5px;">
             ${dateStr} 
-          </span>
-          <span class="default-label-box" style="padding-right: 5px;">
-            Open:
-          </span>
-          <span class="default-label-box" style="padding-right: 5px; color: rgb(246, 70, 93);">
-            ${(Math.round(klineDataSeries.open * 100) / 100).toFixed(2)}
-          </span>
-          <span class="default-label-box" style="padding-right: 5px;">
-            High:
-          </span>
-          <span class="default-label-box" style="padding-right: 5px; color: rgb(246, 70, 93);">
-            ${(Math.round(klineDataSeries.high * 100) / 100).toFixed(2)}
-          </span>
-          <span class="default-label-box" style="padding-right: 5px;">
-            Low:
-          </span>
-          <span class="default-label-box" style="padding-right: 5px; color: rgb(246, 70, 93);">
-          ${(Math.round(klineDataSeries.low * 100) / 100).toFixed(2)}
-          </span>
-          <span class="default-label-box" style="padding-right: 5px;">
-            Close:
-          </span>
-          <span class="default-label-box" style="padding-right: 5px; color: rgb(246, 70, 93);">
-          ${(Math.round(klineDataSeries.close * 100) / 100).toFixed(2)}
-          </span>
-          <span class="default-label-box title_amplitude_label" style="padding-right: 5px;">
-          Volume:
-          </span>
-          <span class="default-label-box title_amplitude_value" style="padding-right: 5px; color: rgb(246, 70, 93);">
-          ${(Math.round(volume * 100) / 100).toFixed(2)}
-          </span>`
+          </div> 
+          <div class="box-number">
+            <div>  
+              <span class="default-label-box" style="padding-right: 5px;">
+                Open:
+              </span>
+              <span class="default-label-box" style="padding-right: 5px; color: rgb(246, 70, 93);">
+                ${(Math.round(klineDataSeries.open * 100) / 100).toFixed(2)}
+              </span>
+              <span class="default-label-box" style="padding-right: 5px;">
+                High:
+              </span>
+              <span class="default-label-box" style="padding-right: 5px; color: rgb(246, 70, 93);">
+                ${(Math.round(klineDataSeries.high * 100) / 100).toFixed(2)}
+              </span>
+              <span class="default-label-box" style="padding-right: 5px;">
+                Low:
+              </span>
+              <span class="default-label-box" style="padding-right: 5px; color: rgb(246, 70, 93);">
+              ${(Math.round(klineDataSeries.low * 100) / 100).toFixed(2)}
+              </span> 
+            </div>
+            <div>
+              <span class="default-label-box" style="padding-right: 5px;">
+                Close:
+              </span>
+              <span class="default-label-box" style="padding-right: 5px; color: rgb(246, 70, 93);">
+              ${(Math.round(klineDataSeries.close * 100) / 100).toFixed(2)}
+              </span>
+              <span class="default-label-box title_amplitude_label" style="padding-right: 5px;">
+              Volume:
+              </span>
+              <span class="default-label-box title_amplitude_value" style="padding-right: 5px; color: rgb(246, 70, 93);">
+              ${(Math.round(volume * 100) / 100).toFixed(2)}
+              </span>
+            </div>
+          </div>
+        `
     }
-    // var left = param.point.x;
-    // if (left > chartProperties.width - toolTipWidth - toolTipMargin) {
-    //   left = chartProperties.width - toolTipWidth;
-    // } else if (left < toolTipWidth / 2) {
-    //   left = priceScaleWidth;
-    // }
-    // toolTip.style.top = 0 + 'px';
-    // toolTip.style.left = left + 'px';
   })
 
   /**
    * Handle forecast
    */
   let lastTime
-  const binanceSocket = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@kline_1m')
+  const binanceSocket = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@kline_1h')
   binanceSocket.onmessage = async function (event) {
     var message = JSON.parse(event.data)
     var candlestick = message.k
@@ -237,23 +236,31 @@ const renderChart = async (domElement, rTime) => {
       close: candlestick.c * 1,
       volume: candlestick.v * 1,
     }
+
+    // => Update kline
     candleseries.update(forecastKline)
 
+    // Update histogram
+    macd_histogram_series.update({
+      time: forecastKline.time,
+      value: forecastKline.volume,
+      color: forecastKline.close > forecastKline.open ? 'rgba(14, 203, 129, 0.4)' : 'rgba(246, 70, 93, 0.4)',
+    })
+
+    // => Update EMA
     if (lastTime !== forecastKline.time) {
       lastTime = forecastKline.time
-
       try {
-        let [newEmaData, forecastLine] = Promise.all([getData(), getForecastData({ symbol: 'BTCUSDT' })])
-
+        let [newEmaData, forecastLine] = await Promise.all([await getData(rTime), await getForecastData({ symbol: 'BTCUSDT' })])
         newEmaData = newEmaData.filter((d) => d.ema).map((d) => ({ time: d.time, value: d.ema }))
-
         const forecastNewEma = forecastLine.map((item, index) => ({
           value: item.high,
           time: newEmaData[newEmaData.length - 1].time + 1000 * 60 * (index + 1),
         }))
-
         ema_series.setData([...newEmaData, ...forecastNewEma])
-      } catch (error) {}
+      } catch (error) {
+        console.log(error)
+      }
     }
   }
 }
@@ -262,13 +269,16 @@ function App() {
   const [rangeTime, setRangeTime] = React.useState('1h')
 
   React.useEffect(() => {
-    renderChart(document.getElementById('tvchart'), '1m')
+    const containerDom = document.getElementById('tvchart')
+    renderChart(containerDom, '1h')
   }, [])
 
   return (
     <div className='wrapper-chart'>
       <div className='focus-area'>
-        <h2>MMRocket.com</h2>
+        <a href='https://mmrocket.com' target='_blank' rel='noreferrer'>
+          <h2>MMRocket.com</h2>
+        </a>
         {/* 1m 3m 5m 15m 30m 1h 2h 4h 6h 8h 12h 1d 3d 1w 1M */}
         <button className='btn-pair-currency'>BTCUSDT</button>
         <button

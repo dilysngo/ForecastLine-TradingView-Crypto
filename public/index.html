@@ -24,6 +24,9 @@
     <title>MMRocket</title>
 
     <style>
+      a {
+        text-decoration: unset;
+      }
       body {
         padding: 0;
         margin: 0;
@@ -35,42 +38,50 @@
         position: relative;
       }
       .wrapper-chart .wrapper-chart-body {
-        padding: 10px 20px 20px;
         display: flex;
         flex-direction: row;
         position: relative;
       }
 
       .wrapper-chart #tvchart {
-        min-width: calc(100vw - 40px);
-        min-height: calc(100vh - 110px);
+        min-width: 100vw;
+        min-height: 100vh;
       }
 
       .chart-title-indicator-container {
         position: absolute;
-        top: 8px;
+        top: 65px;
         left: 10px;
 
         color: rgb(14, 203, 129);
         display: flex;
-        z-index: 1;
+        flex-flow: row wrap;
+        z-index: 10;
       }
       .chart-title-indicator-container .default-label-box {
         color: #76808f;
         font-size: 12px;
         line-height: 18px;
+        white-space: nowrap;
+      }
+      .chart-title-indicator-container .box-number {
+        display: flex;
+        flex-flow: row wrap;
       }
 
       .focus-area {
-        padding: 10px;
+        position: absolute;
+        z-index: 10;
+
+        padding: 10px 10px 4px;
         border-bottom: 1px solid rgba(255, 255, 255, 0.2);
       }
       .focus-area h2 {
-        color: rgb(234, 236, 239);
+        color: rgba(234, 236, 239, 0.7);
         font-size: 20px;
         font-weight: 500;
         padding: 0;
-        margin: 0 0 10px;
+        margin: 0 0 4px;
       }
       .focus-area button {
         color: rgb(132, 142, 156);
@@ -93,13 +104,9 @@
       }
 
       @media screen and (max-width: 767px) {
-        .wrapper-chart {
-          padding: 2px;
-          padding-bottom: 100px;
-        }
         .wrapper-chart #tvchart {
-          min-width: 100vw;
-          min-height: 90vh;
+          min-height: 86vh;
+          max-height: 86vh;
         }
       }
     </style>
