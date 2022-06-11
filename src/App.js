@@ -1,7 +1,7 @@
 import React from 'react'
 import * as LightweightCharts from 'lightweight-charts'
-import { sma_inc, ema_inc, markers_inc } from './indicators'
-import { getForecastData } from './services/storage/chart'
+import { getForecastData, getKlineData } from './services/storage/chart'
+import { ema_inc } from './indicators'
 // import Pusher from 'pusher-js';
 
 // Enable pusher logging - don't include this in production
@@ -17,27 +17,34 @@ function businessDayToString(businessDay) {
   return new Date(Date.UTC(businessDay.year, businessDay.month - 1, businessDay.day, 0, 0, 0)).toLocaleDateString()
 }
 
-const getData = async (rTime) => {
-  // 1m 3m 5m 15m 30m 1h 2h 4h 6h 8h 12h 1d 3d 1w 1M
-  const resp = await fetch(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${rTime}&limit=1000`)
-  const data = await resp.json()
-  let klinedata = data.map((d) => ({
-    time: d[0] / 1000,
-    open: d[1] * 1,
-    high: d[2] * 1,
-    low: d[3] * 1,
-    close: d[4] * 1,
-    volume: d[5] * 1,
-  }))
-  klinedata = sma_inc(klinedata, 7)
-  klinedata = ema_inc(klinedata, 21)
-  klinedata = markers_inc(klinedata)
-  return klinedata
+const paramsKline = {
+  symbol: 'BTCUSDT',
+  interval: '1h',
+  limit: '500',
+}
+
+const getData = async () => {
+  let klineData
+  try {
+    klineData = await getKlineData(paramsKline)
+  } catch (error) {}
+  let forecastData
+  try {
+    forecastData = await getForecastData({ symbol: paramsKline.symbol })
+    forecastData = forecastData.map((d) => ({ close: d.high }))
+    forecastData = [...klineData, ...forecastData]
+    forecastData = ema_inc(forecastData, 21)
+  } catch (error) {}
+  return {
+    params: paramsKline,
+    klineData,
+    forecastData,
+  }
 }
 
 // const LightweightCharts = window.LightweightCharts;
 
-const renderChart = async (domElement, rTime) => {
+const renderChart = async (domElement) => {
   const chartProperties = {
     width: domElement.offsetWidth,
     height: domElement.offsetHeight,
@@ -86,8 +93,8 @@ const renderChart = async (domElement, rTime) => {
   /**
    * SetData
    */
-  const klinedata = await getData(rTime)
-  candleseries.setData(klinedata)
+  const dataChart = await getData()
+  candleseries.setData(dataChart.klineData)
 
   //MARKERS
   // candleseries.setMarkers(
@@ -121,7 +128,7 @@ const renderChart = async (domElement, rTime) => {
     lineWidth: 1,
     crosshairMarkerVisible: false,
   })
-  const ema_data = klinedata.filter((d) => d.ema).map((d) => ({ time: d.time, value: d.ema }))
+  const ema_data = dataChart.klineData.filter((d) => d.ema).map((d) => ({ time: d.time, value: d.ema }))
   ema_series.setData(ema_data)
 
   /**
@@ -140,7 +147,7 @@ const renderChart = async (domElement, rTime) => {
       bottom: 0,
     },
   })
-  const macd_histogram_data = klinedata
+  const macd_histogram_data = dataChart.klineData
     // .filter((d) => d.macd_histogram)
     .map((d) => ({
       time: d.time,
@@ -156,25 +163,25 @@ const renderChart = async (domElement, rTime) => {
   toolTip.className = 'chart-title-indicator-container'
   domElement.appendChild(toolTip)
   // update tooltip
-  chart.subscribeCrosshairMove(function (param) {
+  chart.subscribeCrosshairMove(function (tooltipParam) {
     if (
-      !param.time ||
-      param.point.x < 0 ||
-      param.point.x > chartProperties.width ||
-      param.point.y < 0 ||
-      param.point.y > chartProperties.height
+      !tooltipParam.time ||
+      tooltipParam.point.x < 0 ||
+      tooltipParam.point.x > chartProperties.width ||
+      tooltipParam.point.y < 0 ||
+      tooltipParam.point.y > chartProperties.height
     ) {
       // toolTip.style.display = 'none';
       return
     }
 
-    var dateStr = LightweightCharts.isBusinessDay(param.time)
-      ? businessDayToString(param.time)
-      : new Date(param.time * 1000).toISOString()
+    var dateStr = LightweightCharts.isBusinessDay(tooltipParam.time)
+      ? businessDayToString(tooltipParam.time)
+      : new Date(tooltipParam.time * 1000).toISOString()
 
     // toolTip.style.display = 'block';
-    var klineDataSeries = param.seriesPrices.get(candleseries)
-    var volume = param.seriesPrices.get(macd_histogram_series)
+    var klineDataSeries = tooltipParam.seriesPrices.get(candleseries)
+    var volume = tooltipParam.seriesPrices.get(macd_histogram_series)
     if (klineDataSeries) {
       toolTip.innerHTML = `
           <div class="default-label-box" style="padding-right: 5px;">
@@ -224,7 +231,9 @@ const renderChart = async (domElement, rTime) => {
    * Handle forecast
    */
   let lastTime
-  const binanceSocket = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@kline_1h')
+  const binanceSocket = new WebSocket(
+    `wss://stream.binance.com:9443/ws/${paramsKline.symbol.toLowerCase()}@kline_${paramsKline.interval}`
+  )
   binanceSocket.onmessage = async function (event) {
     var message = JSON.parse(event.data)
     var candlestick = message.k
@@ -251,13 +260,13 @@ const renderChart = async (domElement, rTime) => {
     if (lastTime !== forecastKline.time) {
       lastTime = forecastKline.time
       try {
-        let [newEmaData, forecastLine] = await Promise.all([await getData(rTime), await getForecastData({ symbol: 'BTCUSDT' })])
-        newEmaData = newEmaData.filter((d) => d.ema).map((d) => ({ time: d.time, value: d.ema }))
-        const forecastNewEma = forecastLine.map((item, index) => ({
-          value: item.high,
-          time: newEmaData[newEmaData.length - 1].time + 1000 * 60 * (index + 1),
+        let { forecastData } = await getData()
+        const forecastNewEma = forecastData.map((item, index) => ({
+          value: item.ema,
+          time: item.time ? item.time : forecastKline.time + 1000 * 60 * (index + 1),
         }))
-        ema_series.setData([...newEmaData, ...forecastNewEma])
+        console.log(forecastNewEma)
+        ema_series.setData(forecastNewEma)
       } catch (error) {
         console.log(error)
       }
