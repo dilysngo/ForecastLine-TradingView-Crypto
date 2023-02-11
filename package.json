@@ -1,8 +1,13 @@
 {
-  "name": "my-app",
+  "name": "ForecastLine-TradingView-Crypto",
   "version": "0.1.0",
   "private": true,
   "main": "index.js",
+  "author": {
+    "name": "dilysngo",
+    "email": "ngohung2395@gmail.com",
+    "url": "https://github.com/dilysngo"
+  },
   "dependencies": {
     "@testing-library/jest-dom": "^5.16.4",
     "@testing-library/react": "^13.3.0",
@@ -46,6 +51,6 @@
   },
   "devDependencies": {},
   "browser": {
-    "crypto": false
+    "crypto": true
   }
 }

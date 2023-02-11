@@ -14,7 +14,7 @@ export const getKlineData = async (params) => {
   return new Promise((resolve, reject) => {
     ;(async () => {
       try {
-        const cache_key = `m:k:${params.symbol.toLowerCase()}` // m for mmrocket , f for kline
+        const cache_key = `m:k:${params.symbol.toLowerCase()}` // m for ForecastLineCrypto , f for kline
         let data
 
         const content = null // getFromStorageTTL(cache_key)
@@ -59,7 +59,7 @@ export const getForecastData = async (pairSymbol) => {
   return new Promise((resolve, reject) => {
     ;(async () => {
       try {
-        const cache_key = `m:f:${pairSymbol.symbol.toLowerCase()}` // m for mmrocket , f for forecast
+        const cache_key = `m:f:${pairSymbol.symbol.toLowerCase()}` // m for ForecastLineCrypto , f for forecast
         let data
 
         const content = null // getFromStorageTTL(cache_key)
