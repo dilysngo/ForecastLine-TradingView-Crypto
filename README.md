@@ -2,7 +2,7 @@
 
 ![Love By Dilysngo](preview.png)
 
-An App Tradingview for first Forecast line of BTC
+An app Tradingview for first Forecast line of BTC
 
 ## <h2><img src="https://media.giphy.com/media/WUlplcMpOCEmTGBtBW/giphy.gif" width="30"> To run it </h2> 
 
