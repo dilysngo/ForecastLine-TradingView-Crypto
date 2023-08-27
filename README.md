@@ -24,6 +24,12 @@ Run the project:
   npm start
 ```
 
+Run the test:
+
+```bash
+  npm test
+```
+
 ### Love by 
 
 - [@dilysngo](https://www.github.com/dilysngo)
